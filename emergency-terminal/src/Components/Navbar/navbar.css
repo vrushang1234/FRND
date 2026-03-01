@@ -1,0 +1,57 @@
+.navbar {
+  width: 100%;
+  background-color: #d95541;
+  color: white;
+  min-height: 60px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 1rem;
+  box-sizing: border-box;
+  flex-shrink: 0;
+}
+
+.navbar-title {
+  font-size: 1.1rem;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.navbar-status {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  flex-shrink: 0;
+}
+
+.navbar-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  transition: background-color 0.3s;
+}
+
+.navbar-dot.disconnected { background-color: rgba(255,255,255,0.35); }
+.navbar-dot.connecting   { background-color: #f0e040; animation: nb-pulse 1s infinite; }
+.navbar-dot.connected    { background-color: #7fffb2; }
+
+@keyframes nb-pulse {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.4; }
+}
+
+.navbar-status-text {
+  font-size: 0.75rem;
+  opacity: 0.9;
+  white-space: nowrap;
+}
+
+@media (max-width: 480px) {
+  .navbar-title {
+    font-size: 0.85rem;
+  }
+}

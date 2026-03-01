@@ -1,0 +1,226 @@
+.chatpanel {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  min-width: 0;
+  background-color: #141414;
+}
+
+/* No-user-selected placeholder */
+.chatpanel-placeholder {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  color: #333;
+  font-size: 0.85rem;
+  user-select: none;
+}
+
+/* Header strip above messages */
+.chatpanel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.5rem 1rem;
+  background-color: #1a1a1a;
+  border-bottom: 1px solid #242424;
+  flex-shrink: 0;
+  gap: 0.5rem;
+}
+
+.chatpanel-user-info {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.chatpanel-status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  transition: background-color 0.3s;
+}
+
+.chatpanel-status-dot.online  { background-color: #3dba6f; }
+.chatpanel-status-dot.offline { background-color: #555; }
+
+.chatpanel-username {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #e0e0e0;
+}
+
+.chatpanel-user-status {
+  font-size: 0.72rem;
+  color: #555;
+}
+
+/* Messages area */
+.chatpanel-messages {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 1rem 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  scroll-behavior: smooth;
+}
+
+.chatpanel-messages::-webkit-scrollbar {
+  width: 5px;
+}
+.chatpanel-messages::-webkit-scrollbar-track {
+  background: transparent;
+}
+.chatpanel-messages::-webkit-scrollbar-thumb {
+  background: #2e2e2e;
+  border-radius: 3px;
+}
+
+.chatpanel-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.75rem;
+  margin: auto;
+  color: #3a3a3a;
+  text-align: center;
+  font-size: 0.85rem;
+  user-select: none;
+}
+
+.chatpanel-message {
+  display: flex;
+  max-width: 65%;
+  animation: fadeUp 0.18s ease;
+}
+
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.chatpanel-message.sent {
+  align-self: flex-end;
+  flex-direction: row-reverse;
+}
+.chatpanel-message.received {
+  align-self: flex-start;
+}
+
+.chatpanel-bubble {
+  display: flex;
+  flex-direction: column;
+  padding: 0.5rem 0.8rem;
+  border-radius: 14px;
+  word-break: break-word;
+}
+
+.chatpanel-message.sent .chatpanel-bubble {
+  background-color: #d95541;
+  color: #fff;
+  border-bottom-right-radius: 4px;
+}
+
+.chatpanel-message.received .chatpanel-bubble {
+  background-color: #222;
+  color: #ddd;
+  border-bottom-left-radius: 4px;
+}
+
+.chatpanel-text {
+  font-size: 0.9rem;
+  line-height: 1.45;
+  white-space: pre-wrap;
+}
+
+.chatpanel-time {
+  font-size: 0.68rem;
+  opacity: 0.5;
+  margin-top: 0.2rem;
+  align-self: flex-end;
+}
+
+.chatpanel-system-msg {
+  align-self: center;
+  font-size: 0.72rem;
+  color: #484848;
+  padding: 0.2rem 0;
+  user-select: none;
+}
+
+/* Input area */
+.chatpanel-input-area {
+  display: flex;
+  align-items: flex-end;
+  gap: 0.5rem;
+  padding: 0.75rem 1.25rem;
+  background-color: #1a1a1a;
+  border-top: 1px solid #242424;
+  flex-shrink: 0;
+}
+
+.chatpanel-input {
+  flex: 1;
+  background-color: #222;
+  border: 1px solid #2e2e2e;
+  color: #e0e0e0;
+  padding: 0.65rem 0.85rem;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  outline: none;
+  resize: none;
+  font-family: "Roboto", sans-serif;
+  line-height: 1.4;
+  overflow-y: auto;
+  transition: border-color 0.2s;
+}
+
+.chatpanel-input:focus {
+  border-color: #d95541;
+}
+.chatpanel-input:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
+.chatpanel-send-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 42px;
+  height: 42px;
+  border-radius: 8px;
+  border: none;
+  background-color: #d95541;
+  color: #fff;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: background-color 0.2s, opacity 0.2s;
+}
+
+.chatpanel-send-btn:hover:not(:disabled) {
+  background-color: #c4432f;
+}
+.chatpanel-send-btn:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
+@media (max-width: 600px) {
+  .chatpanel-messages {
+    padding: 0.75rem;
+  }
+  .chatpanel-input-area {
+    padding: 0.6rem 0.75rem;
+  }
+  .chatpanel-message {
+    max-width: 88%;
+  }
+}
