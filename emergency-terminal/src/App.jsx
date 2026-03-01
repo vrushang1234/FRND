@@ -73,6 +73,7 @@ export default function App() {
           [userId]: {
             label,
             online: true,
+            llmHandled: parsed.llm_handled ?? false,
             lastMessage: prev[userId]?.lastMessage || null,
           },
         }));

@@ -30,7 +30,12 @@ export default function UserList({ users, selectedUserId, onSelectUser, unreadCo
               >
                 <span className={`user-status-dot ${user.online ? "online" : "offline"}`} />
                 <div className="user-info">
-                  <div className="user-name">{user.label}</div>
+                  <div className="user-name">
+                    {user.label}
+                    {user.llmHandled && (
+                      <span className="user-llm-badge">Auto</span>
+                    )}
+                  </div>
                   {user.lastMessage && (
                     <div className="user-preview">{user.lastMessage}</div>
                   )}
