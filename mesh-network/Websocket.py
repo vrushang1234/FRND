@@ -11,7 +11,7 @@ async def relay(websocket):
 
     try:
         async for message in websocket:
-            print(f"📩 From {client_ip}: {message}")
+            print(f" From {client_ip}: {message}")
 
             # Relay to other clients
             for conn in list(connections):
@@ -19,16 +19,16 @@ async def relay(websocket):
                     await conn.send(message)
 
     except Exception as e:
-        print(f"⚠️ Error from {client_ip}: {e}")
+        print(f" Error from {client_ip}: {e}")
 
     finally:
         connections.discard(websocket)
-        print(f"❌ Client disconnected: {client_ip}")
+        print(f" Client disconnected: {client_ip}")
 
 
 async def main():
     async with serve(relay, "0.0.0.0", 8080):
-        print("💬 WebSocket Relay active on port 8080")
+        print(" WebSocket Relay active on port 8080")
         await asyncio.Future()
 
 
