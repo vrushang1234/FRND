@@ -9,7 +9,7 @@ FRND is an emergency communication system designed to connect stranded individua
 
 ## The Problem
 
-In disaster scenarios — wildfires, earthquakes, floods — cellular infrastructure is often the first thing to go. Victims have no way to reach emergency services, and rescue teams have no way to coordinate. FRND solves this by creating a self-contained communication network that can be deployed from the air.
+In military operations or disaster scenarios — wildfires, earthquakes, floods — cellular infrastructure is often the first thing to go. Victims have no way to reach emergency services, and rescue teams have no way to coordinate. FRND solves this by creating a self-contained communication network that can be deployed from the air, anywhere.
 
 ## How It Works
 
