@@ -4,7 +4,7 @@ import UserList from "./Components/UserList/UserList";
 import ChatPanel from "./Components/ChatPanel/ChatPanel";
 import "./App.css";
 
-const WS_URL = `ws://${window.location.hostname}:8080`;
+const WS_URL = `ws://10.42.0.1:8080`;
 
 function makeId() {
   return Date.now() + Math.random();
