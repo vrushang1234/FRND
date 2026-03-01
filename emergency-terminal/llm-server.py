@@ -31,6 +31,12 @@ LLM_CMD = [
 ]
 
 PORT = int(os.environ.get("LLM_PORT", 3001))
+
+SYSTEM_PROMPT = (
+    "You are FRND, a safety AI assisting people stuck in disaster-stricken areas "
+    "while they wait for an emergency service operator to contact them. "
+    "Give calm, clear, and practical guidance. Keep every response under 50 words."
+)
 # ──────────────────────────────────────────────────────────────────────────────
 
 _proc = None
@@ -64,7 +70,9 @@ def _query_llm(message: str) -> str:
     with _lock:
         _start_llm()
 
-        _proc.stdin.write(message + "\n")
+        # Inject the system prompt as context before the user's message
+        llm_input = f"{SYSTEM_PROMPT}\nUser: {message}\nAssistant:"
+        _proc.stdin.write(llm_input + "\n")
         _proc.stdin.flush()
 
         # Collect lines until 3 seconds of silence (LLM finished responding)
@@ -75,7 +83,7 @@ def _query_llm(message: str) -> str:
                 break  # silence = done
             line = _proc.stdout.readline().rstrip()
             # Skip bare prompts and echoed input
-            if line and line.strip() not in (">", ">>>", message.strip()):
+            if line and line.strip() not in (">", ">>>", message.strip(), "Assistant:"):
                 lines.append(line)
 
         return "\n".join(lines).strip() or "I could not respond right now."

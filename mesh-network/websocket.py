@@ -114,6 +114,21 @@ async def handle_user(websocket, client_ip):
                 }))
             except Exception:
                 pass
+
+            # Recalculate LLM flags — positions shift after a disconnect
+            for i, rid in enumerate(user_join_order):
+                should_be_llm = i >= MAX_MANUAL_USERS
+                if rooms[rid]["llm_handled"] != should_be_llm:
+                    rooms[rid]["llm_handled"] = should_be_llm
+                    try:
+                        await admin_client.send(json.dumps({
+                            "type": "llm_status_changed",
+                            "id": rid,
+                            "llm_handled": should_be_llm,
+                        }))
+                    except Exception:
+                        pass
+
         print(f" User disconnected: {room_id}")
 
 

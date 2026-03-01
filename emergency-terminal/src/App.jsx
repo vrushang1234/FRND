@@ -112,6 +112,19 @@ export default function App() {
             },
           ],
         }));
+      } else if (type === "llm_status_changed") {
+        const userId = parsed.id;
+        const llmHandled = parsed.llm_handled;
+        if (llmHandled) {
+          llmHandledRef.current.add(userId);
+        } else {
+          llmHandledRef.current.delete(userId);
+        }
+        setUsers((prev) =>
+          prev[userId]
+            ? { ...prev, [userId]: { ...prev[userId], llmHandled } }
+            : prev,
+        );
       } else if (type === "message") {
         const userId = from;
         if (!userId) return;
