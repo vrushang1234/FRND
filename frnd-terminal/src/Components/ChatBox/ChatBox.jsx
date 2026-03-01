@@ -41,6 +41,7 @@ export default function ChatBox({ onStatusChange }) {
     ws.onopen = () => {
       updateStatus("connected");
       addSystemMessage("Connected");
+      ws.send(JSON.stringify({ type: "identify", role: "user" }));
     };
 
     ws.onmessage = (event) => {
