@@ -3,13 +3,15 @@ import json
 from websockets.asyncio.server import serve
 
 admin_client = None
-rooms = {}  # { room_id: {"ws": websocket, "ip": client_ip} }
+rooms = {}  # { room_id: {"ws": websocket, "ip": client_ip, "llm_handled": bool} }
+user_join_order = []  # ordered list of active room_ids
+
+MAX_MANUAL_USERS = 2  # first N users handled manually by emergency-terminal
 
 
 async def relay(websocket):
     client_ip = websocket.remote_address[0]
 
-    # Wait for identify message from either admin or user
     try:
         raw = await websocket.recv()
         data = json.loads(raw)
@@ -35,6 +37,7 @@ async def handle_admin(websocket):
                 "type": "user_connected",
                 "id": room_id,
                 "ip": info["ip"],
+                "llm_handled": info["llm_handled"],
             }))
         except Exception:
             pass
@@ -59,7 +62,7 @@ async def handle_admin(websocket):
 async def handle_user(websocket, client_ip):
     global admin_client
 
-    # Unique room_id — handle multiple users from the same IP
+    # Unique room_id
     base = f"user_{client_ip.replace('.', '_')}"
     room_id = base
     counter = 1
@@ -67,8 +70,12 @@ async def handle_user(websocket, client_ip):
         room_id = f"{base}_{counter}"
         counter += 1
 
-    rooms[room_id] = {"ws": websocket, "ip": client_ip}
-    print(f" User joined: {room_id} ({client_ip})")
+    # Users beyond MAX_MANUAL_USERS are flagged for LLM auto-reply
+    llm_handled = len(user_join_order) >= MAX_MANUAL_USERS
+
+    rooms[room_id] = {"ws": websocket, "ip": client_ip, "llm_handled": llm_handled}
+    user_join_order.append(room_id)
+    print(f" User joined: {room_id} ({client_ip}) — {'LLM' if llm_handled else 'manual'}")
 
     if admin_client:
         try:
@@ -76,6 +83,7 @@ async def handle_user(websocket, client_ip):
                 "type": "user_connected",
                 "id": room_id,
                 "ip": client_ip,
+                "llm_handled": llm_handled,
             }))
         except Exception:
             pass
@@ -95,6 +103,9 @@ async def handle_user(websocket, client_ip):
                 await websocket.send("System: Emergency terminal is offline.")
     finally:
         rooms.pop(room_id, None)
+        if room_id in user_join_order:
+            user_join_order.remove(room_id)
+
         if admin_client:
             try:
                 await admin_client.send(json.dumps({
@@ -103,6 +114,21 @@ async def handle_user(websocket, client_ip):
                 }))
             except Exception:
                 pass
+
+            # Recalculate LLM flags — positions shift after a disconnect
+            for i, rid in enumerate(user_join_order):
+                should_be_llm = i >= MAX_MANUAL_USERS
+                if rooms[rid]["llm_handled"] != should_be_llm:
+                    rooms[rid]["llm_handled"] = should_be_llm
+                    try:
+                        await admin_client.send(json.dumps({
+                            "type": "llm_status_changed",
+                            "id": rid,
+                            "llm_handled": should_be_llm,
+                        }))
+                    except Exception:
+                        pass
+
         print(f" User disconnected: {room_id}")
 
 
@@ -114,4 +140,3 @@ async def main():
 
 if __name__ == "__main__":
     asyncio.run(main())
-

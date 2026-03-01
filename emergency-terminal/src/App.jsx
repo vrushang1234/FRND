@@ -26,6 +26,8 @@ export default function App() {
 
   const wsRef = useRef(null);
   const selectedUserIdRef = useRef(selectedUserId);
+  // Tracks which users get LLM auto-replies (avoids stale-closure issues)
+  const llmHandledRef = useRef(new Set());
 
   useEffect(() => {
     selectedUserIdRef.current = selectedUserId;
@@ -68,11 +70,13 @@ export default function App() {
       if (type === "user_connected") {
         const userId = id || ip;
         const label = ip || id;
+        if (parsed.llm_handled) llmHandledRef.current.add(userId);
         setUsers((prev) => ({
           ...prev,
           [userId]: {
             label,
             online: true,
+            llmHandled: parsed.llm_handled ?? false,
             lastMessage: prev[userId]?.lastMessage || null,
           },
         }));
@@ -90,6 +94,7 @@ export default function App() {
         }));
       } else if (type === "user_disconnected") {
         const userId = id || ip;
+        llmHandledRef.current.delete(userId);
         setUsers((prev) =>
           prev[userId]
             ? { ...prev, [userId]: { ...prev[userId], online: false } }
@@ -107,6 +112,19 @@ export default function App() {
             },
           ],
         }));
+      } else if (type === "llm_status_changed") {
+        const userId = parsed.id;
+        const llmHandled = parsed.llm_handled;
+        if (llmHandled) {
+          llmHandledRef.current.add(userId);
+        } else {
+          llmHandledRef.current.delete(userId);
+        }
+        setUsers((prev) =>
+          prev[userId]
+            ? { ...prev, [userId]: { ...prev[userId], llmHandled } }
+            : prev,
+        );
       } else if (type === "message") {
         const userId = from;
         if (!userId) return;
@@ -123,7 +141,6 @@ export default function App() {
           [userId]: [...(prev[userId] || []), newMsg],
         }));
 
-        // Update last message preview in sidebar
         setUsers((prev) =>
           prev[userId]
             ? { ...prev, [userId]: { ...prev[userId], lastMessage: content } }
@@ -133,12 +150,40 @@ export default function App() {
               },
         );
 
-        // Increment unread if this user is not selected
         if (selectedUserIdRef.current !== userId) {
           setUnreadCounts((prev) => ({
             ...prev,
             [userId]: (prev[userId] || 0) + 1,
           }));
+        }
+
+        // Auto-reply via local LLM for overflow users
+        if (llmHandledRef.current.has(userId)) {
+          fetch("http://localhost:3001/query", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ message: content }),
+          })
+            .then((r) => r.json())
+            .then(({ response }) => {
+              if (ws.readyState !== WebSocket.OPEN) return;
+              ws.send(JSON.stringify({ type: "message", to: userId, content: response }));
+              setMessages((prev) => ({
+                ...prev,
+                [userId]: [
+                  ...(prev[userId] || []),
+                  {
+                    id: makeId(),
+                    type: "sent",
+                    content: response,
+                    timestamp: timestamp(),
+                  },
+                ],
+              }));
+            })
+            .catch(() => {
+              // LLM service unreachable — do nothing, admin can reply manually
+            });
         }
       }
     };

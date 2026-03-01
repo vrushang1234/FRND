@@ -139,3 +139,17 @@
   justify-content: center;
   flex-shrink: 0;
 }
+
+.user-llm-badge {
+  display: inline-block;
+  margin-left: 0.4rem;
+  padding: 0 0.3rem;
+  border-radius: 3px;
+  background-color: #2a4a6b;
+  color: #7ab8f5;
+  font-size: 0.6rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  vertical-align: middle;
+  text-transform: uppercase;
+}
