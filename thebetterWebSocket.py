@@ -2,56 +2,115 @@ import asyncio
 import json
 from websockets.asyncio.server import serve
 
-# Global State
-arduino_client = None  
-rooms = {}  # { "room_id": websocket_object }
+admin_client = None
+rooms = {}  # { room_id: {"ws": websocket, "ip": client_ip} }
+
 
 async def relay(websocket):
-    global arduino_client
-    
     client_ip = websocket.remote_address[0]
-    path = websocket.request.path.strip("/")
-    room_id = path if path else f"user_{client_ip.replace('.', '_')}"
 
-    # --- 1. IDENTIFY ARDUINO ---
-    # (Assuming the Arduino connects with a specific path or is the first connection)
-    if path == "arduino":
-        arduino_client = websocket
-        print(f"🚨 ARDUINO BRAIN CONNECTED")
-        try:
-            async for raw_message in websocket:
-                # Arduino sends: {"room": "room1", "msg": "Hello"}
-                data = json.loads(raw_message)
-                target = data.get("room")
-                if target in rooms:
-                    await rooms[target].send(data.get("msg"))
-        finally:
-            arduino_client = None
+    # Wait for identify message from either admin or user
+    try:
+        raw = await websocket.recv()
+        data = json.loads(raw)
+        role = data.get("role")
+    except Exception:
         return
 
-    # --- 2. IDENTIFY PHONES ---
-    rooms[room_id] = websocket
-    print(f"👤 Phone joined: {room_id}")
+    if role == "admin":
+        await handle_admin(websocket)
+    elif role == "user":
+        await handle_user(websocket, client_ip)
+
+
+async def handle_admin(websocket):
+    global admin_client
+    admin_client = websocket
+    print("🚨 EMERGENCY TERMINAL CONNECTED")
+
+    # Catch admin up on already-connected users
+    for room_id, info in list(rooms.items()):
+        try:
+            await websocket.send(json.dumps({
+                "type": "user_connected",
+                "id": room_id,
+                "ip": info["ip"],
+            }))
+        except Exception:
+            pass
+
+    try:
+        async for raw in websocket:
+            try:
+                data = json.loads(raw)
+                if data.get("type") == "message":
+                    target = data.get("to")
+                    content = data.get("content", "")
+                    if target in rooms:
+                        await rooms[target]["ws"].send(content)
+            except json.JSONDecodeError:
+                pass
+    finally:
+        if admin_client == websocket:
+            admin_client = None
+        print("🔴 EMERGENCY TERMINAL DISCONNECTED")
+
+
+async def handle_user(websocket, client_ip):
+    global admin_client
+
+    # Unique room_id — handle multiple users from the same IP
+    base = f"user_{client_ip.replace('.', '_')}"
+    room_id = base
+    counter = 1
+    while room_id in rooms:
+        room_id = f"{base}_{counter}"
+        counter += 1
+
+    rooms[room_id] = {"ws": websocket, "ip": client_ip}
+    print(f"👤 User joined: {room_id} ({client_ip})")
+
+    if admin_client:
+        try:
+            await admin_client.send(json.dumps({
+                "type": "user_connected",
+                "id": room_id,
+                "ip": client_ip,
+            }))
+        except Exception:
+            pass
 
     try:
         async for message in websocket:
-            if arduino_client:
-                # Wrap message in JSON for the Arduino
-                payload = json.dumps({
-                    "room": room_id,
-                    "msg": message
-                })
-                await arduino_client.send(payload)
+            if admin_client:
+                try:
+                    await admin_client.send(json.dumps({
+                        "type": "message",
+                        "from": room_id,
+                        "content": message,
+                    }))
+                except Exception:
+                    pass
             else:
-                await websocket.send("System: Emergency Brain is offline.")
+                await websocket.send("System: Emergency terminal is offline.")
     finally:
-        if room_id in rooms:
-            del rooms[room_id]
+        rooms.pop(room_id, None)
+        if admin_client:
+            try:
+                await admin_client.send(json.dumps({
+                    "type": "user_disconnected",
+                    "id": room_id,
+                }))
+            except Exception:
+                pass
+        print(f"❌ User disconnected: {room_id}")
+
 
 async def main():
-    async with serve(relay, "0.0.0.0", 8765):
-        print("💬 Pi JSON Relay Active on port 8765")
+    async with serve(relay, "0.0.0.0", 8080):
+        print("💬 FRND WebSocket Server active on port 8080")
         await asyncio.Future()
+
 
 if __name__ == "__main__":
     asyncio.run(main())

@@ -70,13 +70,22 @@ export default function App() {
         const label = ip || id;
         setUsers((prev) => ({
           ...prev,
-          [userId]: { label, online: true, lastMessage: prev[userId]?.lastMessage || null },
+          [userId]: {
+            label,
+            online: true,
+            lastMessage: prev[userId]?.lastMessage || null,
+          },
         }));
         setMessages((prev) => ({
           ...prev,
           [userId]: [
             ...(prev[userId] || []),
-            { id: makeId(), type: "system", content: "User connected", timestamp: timestamp() },
+            {
+              id: makeId(),
+              type: "system",
+              content: "User connected",
+              timestamp: timestamp(),
+            },
           ],
         }));
       } else if (type === "user_disconnected") {
@@ -84,13 +93,18 @@ export default function App() {
         setUsers((prev) =>
           prev[userId]
             ? { ...prev, [userId]: { ...prev[userId], online: false } }
-            : prev
+            : prev,
         );
         setMessages((prev) => ({
           ...prev,
           [userId]: [
             ...(prev[userId] || []),
-            { id: makeId(), type: "system", content: "User disconnected", timestamp: timestamp() },
+            {
+              id: makeId(),
+              type: "system",
+              content: "User disconnected",
+              timestamp: timestamp(),
+            },
           ],
         }));
       } else if (type === "message") {
@@ -116,7 +130,7 @@ export default function App() {
             : {
                 ...prev,
                 [userId]: { label: userId, online: true, lastMessage: content },
-              }
+              },
         );
 
         // Increment unread if this user is not selected
@@ -148,7 +162,9 @@ export default function App() {
   const handleSendMessage = useCallback((userId, text) => {
     if (wsRef.current?.readyState !== WebSocket.OPEN) return;
 
-    wsRef.current.send(JSON.stringify({ type: "message", to: userId, content: text }));
+    wsRef.current.send(
+      JSON.stringify({ type: "message", to: userId, content: text }),
+    );
 
     const newMsg = {
       id: makeId(),
@@ -183,7 +199,7 @@ export default function App() {
         <ChatPanel
           selectedUserId={selectedUserId}
           selectedUser={selectedUserId ? users[selectedUserId] : null}
-          messages={selectedUserId ? (messages[selectedUserId] || []) : []}
+          messages={selectedUserId ? messages[selectedUserId] || [] : []}
           onSendMessage={handleSendMessage}
           wsStatus={wsStatus}
         />
