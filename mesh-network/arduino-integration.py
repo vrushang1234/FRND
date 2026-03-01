@@ -1,6 +1,7 @@
 import os
 import asyncio
 import websockets
+import json  # <--- Added for JSON support
 from google import genai
 
 api_key = os.environ.get("GEMINI_API_KEY")
@@ -9,27 +10,48 @@ client = genai.Client(api_key=api_key)
 print("Gemini connected!")
 
 async def handle(websocket):
-    print("Pi connected!")
+    print("Connected to Raspberry Pi Relay!")
 
-    async for message in websocket:
-        print("Question: " + message)
-
+    async def process_message(data_json):
+        """Helper to process each Gemini request independently."""
         try:
+            # 1. Parse the incoming package
+            data = json.loads(data_json)
+            room_id = data.get("room")
+            message = data.get("msg")
+
+            print(f"[{room_id}] Processing: {message[:50]}...")
+
+            # 2. Call Gemini
             response = client.models.generate_content(
-                model="gemini-2.5-flash",
+                model="gemini-2.0-flash", # Use 2.0 or 1.5 as 2.5 isn't out yet!
                 contents=message
             )
-            reply = response.text
-            print("Answer: " + reply[:100] + "...")
-        except Exception as e:
-            reply = "Sorry, Gemini error: " + str(e)
-            print(reply)
+            
+            # 3. Wrap the reply back with the SAME Room ID
+            reply_package = json.dumps({
+                "room": room_id,
+                "msg": response.text
+            })
+            
+            # 4. Send back to Pi
+            await websocket.send(reply_package)
+            print(f"✅ [{room_id}] Reply sent.")
 
-        await websocket.send(reply)
+        except Exception as e:
+            print(f"⚠️ Error: {e}")
+
+    async for raw_message in websocket:
+        # Create a concurrent task for every incoming message
+        # This allows Phone A to start while Phone B is still generating!
+        asyncio.create_task(process_message(raw_message))
 
 async def main():
-    print("Gemini server running on port 8765...")
-    async with websockets.serve(handle, "0.0.0.0", 8765, ping_timeout=120):
-        await asyncio.Future()
+    # Note: If the Arduino is the CLIENT, it should connect TO the Pi
+    # Replace 'PI_IP_ADDRESS' with your actual Raspberry Pi IP
+    uri = "ws://PI_IP_ADDRESS:8765"
+    async with websockets.connect(uri, ping_timeout=120) as websocket:
+        await handle(websocket)
 
-asyncio.run(main())
+if __name__ == "__main__":
+    asyncio.run(main())
