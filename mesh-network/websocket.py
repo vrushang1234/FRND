@@ -26,7 +26,7 @@ async def relay(websocket):
 async def handle_admin(websocket):
     global admin_client
     admin_client = websocket
-    print("🚨 EMERGENCY TERMINAL CONNECTED")
+    print(" EMERGENCY TERMINAL CONNECTED")
 
     # Catch admin up on already-connected users
     for room_id, info in list(rooms.items()):
@@ -53,7 +53,7 @@ async def handle_admin(websocket):
     finally:
         if admin_client == websocket:
             admin_client = None
-        print("🔴 EMERGENCY TERMINAL DISCONNECTED")
+        print(" EMERGENCY TERMINAL DISCONNECTED")
 
 
 async def handle_user(websocket, client_ip):
@@ -68,7 +68,7 @@ async def handle_user(websocket, client_ip):
         counter += 1
 
     rooms[room_id] = {"ws": websocket, "ip": client_ip}
-    print(f"👤 User joined: {room_id} ({client_ip})")
+    print(f" User joined: {room_id} ({client_ip})")
 
     if admin_client:
         try:
@@ -103,14 +103,15 @@ async def handle_user(websocket, client_ip):
                 }))
             except Exception:
                 pass
-        print(f"❌ User disconnected: {room_id}")
+        print(f" User disconnected: {room_id}")
 
 
 async def main():
     async with serve(relay, "0.0.0.0", 8080):
-        print("💬 FRND WebSocket Server active on port 8080")
+        print(" FRND WebSocket Server active on port 8080")
         await asyncio.Future()
 
 
 if __name__ == "__main__":
     asyncio.run(main())
+
