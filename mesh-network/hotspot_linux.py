@@ -21,7 +21,7 @@ def run(cmd, check=False):
 def check_nmcli():
     _, _, code = run("which nmcli")
     if code != 0:
-        print("❌ nmcli not found. Install NetworkManager first.")
+        print(" nmcli not found. Install NetworkManager first.")
         sys.exit(1)
 
 
@@ -29,7 +29,7 @@ def get_wifi_interface():
     out, _, _ = run("nmcli -t -f DEVICE,TYPE device | grep ':wifi' | cut -d: -f1")
     interfaces = out.splitlines()
     if not interfaces:
-        print("❌ No WiFi interface found.")
+        print(" No WiFi interface found.")
         sys.exit(1)
     return interfaces[0]
 
@@ -38,7 +38,7 @@ def start_hotspot(ssid: str, password: str, interface: str = None):
     if not interface:
         interface = get_wifi_interface()
 
-    print(f"\n📡 Starting hotspot on interface: {interface}")
+    print(f"\n Starting hotspot on interface: {interface}")
     print(f"   SSID    : {ssid}")
     print(f"   Password: {password}")
 
@@ -51,14 +51,14 @@ def start_hotspot(ssid: str, password: str, interface: str = None):
 
     out, err, code = run(cmd)
     if code != 0:
-        print(f"❌ Failed to start hotspot:\n{err}")
-        print("\n💡 Tips:")
+        print(f" Failed to start hotspot:\n{err}")
+        print("\n Tips:")
         print("  - Run as sudo/root")
         print("  - Make sure WiFi is not connected to another network")
         print("  - Try: sudo nmcli radio wifi on")
         sys.exit(1)
 
-    print("\n✅ Hotspot is active! Others can connect now.")
+    print("\n Hotspot is active! Others can connect now.")
     print("\nTo see connected clients:")
     print("  ip neigh show")
     print("\nTo stop the hotspot, run this script and choose option 2.")
@@ -67,15 +67,15 @@ def start_hotspot(ssid: str, password: str, interface: str = None):
 def stop_hotspot():
     out, err, code = run("nmcli connection show --active | grep Hotspot | awk '{print $1}'")
     if not out:
-        print("⚠️  No active hotspot found.")
+        print("  No active hotspot found.")
         return
 
     hotspot_name = out.splitlines()[0]
     _, err, code = run(f'nmcli connection down "{hotspot_name}"')
     if code == 0:
-        print(f"✅ Hotspot '{hotspot_name}' stopped.")
+        print(f" Hotspot '{hotspot_name}' stopped.")
     else:
-        print(f"❌ Could not stop hotspot:\n{err}")
+        print(f" Could not stop hotspot:\n{err}")
 
 
 def show_status():
@@ -95,12 +95,12 @@ def show_qr(ssid: str, password: str):
     if code == 0:
         run(f'qrencode -t UTF8 "{wifi_string}"')
     else:
-        print(f"\n📋 WiFi connect string (use a QR generator app):\n{wifi_string}")
+        print(f"\n WiFi connect string (use a QR generator app):\n{wifi_string}")
 
 
 if __name__ == "__main__":
     if sys.platform == "win32":
-        print("❌ This script is for Linux only. Use hotspot_windows.py on Windows.")
+        print(" This script is for Linux only. Use hotspot_windows.py on Windows.")
         sys.exit(1)
 
     check_nmcli()
@@ -115,7 +115,7 @@ if __name__ == "__main__":
         ssid = input("Enter SSID (network name) [default: MyHotspot]: ").strip() or "MyHotspot"
         password = input("Enter password (min 8 chars): ").strip()
         if len(password) < 8:
-            print("❌ Password must be at least 8 characters.")
+            print(" Password must be at least 8 characters.")
             sys.exit(1)
         iface = input("WiFi interface (leave blank to auto-detect, e.g. wlan0): ").strip() or None
         start_hotspot(ssid, password, iface)
